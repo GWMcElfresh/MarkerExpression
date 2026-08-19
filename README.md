@@ -37,7 +37,7 @@ scancel <jobid> …
 
 | Piece | Role |
 |-------|------|
-| `docker/Dockerfile.thin` | `python:3.11-slim-bookworm` + CA certs + `uv` |
+| `docker/thin.def` | Apptainer def: `python:3.11-slim-bookworm` + CA certs + `uv` |
 | `.singularity_cache/marker_expression_thin.sif` | Built on `batch`; scratch under `$PROJECT_DIR/tmp` |
 | `uv.lock` + `.venv` | Census / TileDB / pandas stack |
 | `config/lineage_map.yaml` | Closed CL term → lineage table |
@@ -121,5 +121,6 @@ Lessons carried from UCE_runner and saturn on ARC:
 | Apptainer build permission errors | `ARC_APPTAINER_BUILD_ARGS=--fakeroot bash scripts/build_thin_sif.sh` |
 | Census open fails (Timeout, OSError, empty query) | Compute node needs HTTPS to Census. The summarize log names the exception class. Check `sacct` then retry; H5AD ingest is a later fallback |
 | Summarize OOM | Raise `SUMMARIZE_MEM` in `config/resources.env` from `sacct … MaxRSS`; logs are unbuffered so progress prints before the kill |
-| Stale SIF after Dockerfile change | `bash scripts/build_thin_sif.sh` |
+| Stale SIF after `thin.def` change | `bash scripts/build_thin_sif.sh` |
+| `invalid header keyword found: from python` | Apptainer was given a Dockerfile; build from `docker/thin.def` (`Bootstrap: docker`) |
 | Stale venv after lock/pyproject change | `bash scripts/build_py_venv.sh` |

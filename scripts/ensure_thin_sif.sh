@@ -33,8 +33,8 @@ _thin_sif_inputs_hash() {
     return 1
   fi
   {
-    printf 'file:docker/Dockerfile.thin\n'
-    cat "${PROJECT_DIR}/docker/Dockerfile.thin"
+    printf 'file:docker/thin.def\n'
+    cat "${PROJECT_DIR}/docker/thin.def"
   } | "${hasher[@]}" | awk '{print $1}'
 }
 
@@ -101,7 +101,10 @@ _thin_sif_smoke_ok() {
   cli=apptainer
   command -v apptainer >/dev/null 2>&1 || cli=singularity
   command -v "${cli}" >/dev/null 2>&1 || return 1
-  "${cli}" exec "${sif}" python3 -c 'import sys; assert sys.version_info[:2] == (3, 11)' >/dev/null 2>&1
+  "${cli}" exec "${sif}" python3 -c 'import sys; assert sys.version_info[:2] == (3, 11)' >/dev/null 2>&1 \
+    || return 1
+  # venv sync invokes uv inside the SIF
+  "${cli}" exec "${sif}" uv --version >/dev/null 2>&1
 }
 
 _thin_sif_ready_without_rebuild() {
@@ -163,8 +166,8 @@ ensure_thin_sif() {
     echo "ERROR: apptainer/singularity not on PATH" >&2
     return 1
   }
-  [[ -f "${PROJECT_DIR}/docker/Dockerfile.thin" ]] || {
-    echo "ERROR: missing ${PROJECT_DIR}/docker/Dockerfile.thin" >&2
+  [[ -f "${PROJECT_DIR}/docker/thin.def" ]] || {
+    echo "ERROR: missing ${PROJECT_DIR}/docker/thin.def" >&2
     return 1
   }
 
@@ -178,12 +181,12 @@ ensure_thin_sif() {
   while IFS= read -r arg; do
     [[ -n "${arg}" ]] && build_args+=("${arg}")
   done < <(_thin_apptainer_build_args)
-  echo "Building thin SIF from docker/Dockerfile.thin -> ${tmp_sif}" >&2
+  echo "Building thin SIF from docker/thin.def -> ${tmp_sif}" >&2
   if ((${#build_args[@]})); then
-    "${cli}" build --force "${build_args[@]}" "${tmp_sif}" "${PROJECT_DIR}/docker/Dockerfile.thin" \
+    "${cli}" build --force "${build_args[@]}" "${tmp_sif}" "${PROJECT_DIR}/docker/thin.def" \
       || { rm -f "${tmp_sif}"; return 1; }
   else
-    "${cli}" build --force "${tmp_sif}" "${PROJECT_DIR}/docker/Dockerfile.thin" \
+    "${cli}" build --force "${tmp_sif}" "${PROJECT_DIR}/docker/thin.def" \
       || { rm -f "${tmp_sif}"; return 1; }
   fi
   mv -f "${tmp_sif}" "${path}"
