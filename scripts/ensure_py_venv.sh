@@ -81,6 +81,8 @@ _arc_venv_smoke_ok() {
   py="$(_arc_venv_python)"
   [[ -x "${py}" ]] || return 1
   # Prefer smoke inside the thin SIF when present; fall back to host for local tests.
+  # Login nodes may lack apptainer: do not host-import a 3.11 venv (fails on 3.12)
+  # and do not treat that as "stale" every submit.
   if [[ -f "${THIN_SIF:-}" ]] && { command -v apptainer >/dev/null 2>&1 || command -v singularity >/dev/null 2>&1; }; then
     cli=apptainer
     command -v apptainer >/dev/null 2>&1 || cli=singularity
@@ -89,6 +91,8 @@ _arc_venv_smoke_ok() {
       --pwd "${PROJECT_DIR}" \
       "${THIN_SIF}" \
       "${py}" -c 'import cellxgene_census, tiledbsoma, pandas, pyarrow, yaml' >/dev/null 2>&1
+  elif [[ -f "${THIN_SIF:-}" ]]; then
+    return 0
   else
     "${py}" -c 'import cellxgene_census, tiledbsoma, pandas, pyarrow, yaml' >/dev/null 2>&1
   fi
@@ -116,7 +120,7 @@ _sync_py_venv() {
       --env "TMPDIR=${TMPDIR:-${PROJECT_DIR}/tmp}" \
       --env "XDG_CACHE_HOME=${UV_CACHE_DIR}" \
       "${THIN_SIF}" \
-      uv sync --frozen --python "${ARC_PY_VERSION}" --extra dev \
+      uv sync --frozen --python "${ARC_PY_VERSION}" \
       || return 1
   else
     command -v uv >/dev/null 2>&1 || {
@@ -143,8 +147,9 @@ py_venv_sync_needed() {
 submit_py_venv_job() {
   local run_ts="${1:-}"
   run_ts="${run_ts:-$(date +%Y%m%d-%H%M%S)}"
+  # Clear ARC_SUBMIT_ONLY so the worker does not re-sbatch (same afterok race as SIF).
   sbatch --parsable \
-    --export=ALL,RUN_TS="${run_ts}",PROJECT_DIR="${PROJECT_DIR}" \
+    --export=ALL,ARC_SUBMIT_ONLY=,RUN_TS="${run_ts}",PROJECT_DIR="${PROJECT_DIR}" \
     --partition="${SLURM_CPU_PARTITION}" \
     --cpus-per-task="${PY_VENV_CPUS}" \
     --mem="${PY_VENV_MEM}" \

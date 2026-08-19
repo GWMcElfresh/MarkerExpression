@@ -32,8 +32,14 @@ if [[ -n "${ARC_SUBMIT_ONLY:-}" || -z "${SLURM_JOB_ID:-}" ]]; then
 fi
 
 tmpdir="$(arc_stage_tmpdir py-venv)"
-mkdir -p -m 700 "${tmpdir}"
+mkdir -p -m 700 "${tmpdir}" "${tmpdir}/xdg-cache" "${tmpdir}/mpl"
 export TMPDIR="${tmpdir}"
+export APPTAINER_TMPDIR="${tmpdir}"
+export SINGULARITY_TMPDIR="${tmpdir}"
+export XDG_CACHE_HOME="${tmpdir}/xdg-cache"
+export MPLCONFIGDIR="${tmpdir}/mpl"
+export PYTHONUNBUFFERED=1
+export MPLBACKEND=Agg
 trap 'rm -rf "${tmpdir}"' EXIT
 
 # shellcheck source=ensure_thin_sif.sh

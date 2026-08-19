@@ -42,14 +42,14 @@ if [[ -z "${RUN_ID:-}" ]]; then
 fi
 
 tmpdir="$(arc_stage_tmpdir summarize)"
-mkdir -p -m 700 "${tmpdir}"
+mkdir -p -m 700 "${tmpdir}" "${tmpdir}/xdg-cache" "${tmpdir}/mpl"
 export TMPDIR="${tmpdir}"
 export APPTAINER_TMPDIR="${tmpdir}"
 export SINGULARITY_TMPDIR="${tmpdir}"
 export XDG_CACHE_HOME="${tmpdir}/xdg-cache"
 export MPLCONFIGDIR="${tmpdir}/mpl"
 export PYTHONUNBUFFERED=1
-mkdir -p "${XDG_CACHE_HOME}" "${MPLCONFIGDIR}"
+export MPLBACKEND=Agg
 trap 'rm -rf "${tmpdir}"' EXIT
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-8}"
 export RUN_ID OUTPUT_ROOT CENSUS_VERSION
@@ -81,6 +81,7 @@ cli="$(arc_container_cli)" || exit 1
   --env "XDG_CACHE_HOME=${XDG_CACHE_HOME}" \
   --env "MPLCONFIGDIR=${MPLCONFIGDIR}" \
   --env "PYTHONUNBUFFERED=1" \
+  --env "MPLBACKEND=${MPLBACKEND}" \
   --env "OMP_NUM_THREADS=${OMP_NUM_THREADS}" \
   "${THIN_SIF}" \
   "${VENV_DIR}/bin/python" "${PROJECT_DIR}/analysis/summarize_percent.py"
@@ -92,7 +93,8 @@ for f in \
   percent_by_lineage_tissue.parquet \
   percent_by_lineage_tissue.csv \
   cell_type_mapping.tsv \
-  lineage_cell_counts.tsv
+  lineage_cell_counts.tsv \
+  run_summary.json
 do
   [[ -f "${out_dir}/${f}" ]] || {
     echo "ERROR: missing ${out_dir}/${f}" >&2

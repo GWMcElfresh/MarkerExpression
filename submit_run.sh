@@ -36,7 +36,9 @@ printf '%s\n' "${RUN_ID}" > "${OUTPUT_ROOT}/${RUN_ID}/run_id.txt"
 PREP_JOBS=()
 
 if thin_sif_build_needed; then
-  SJ="$(submit_thin_sif_job "${RUN_TS}")"
+  # Dual-mode wrapper clears ARC_SUBMIT_ONLY on the child sbatch (direct
+  # submit_thin_sif_job would leak it and nested-sbatch the worker).
+  SJ="$(bash "${PROJECT_DIR}/scripts/build_thin_sif.sh")"
   PREP_JOBS+=("${SJ}")
   echo "Submitted thin SIF build: ${SJ}"
 else

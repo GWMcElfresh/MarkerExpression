@@ -48,6 +48,10 @@ _thin_sif_stamp_matches() {
   [[ -n "${actual}" && "${actual}" == "${expected}" ]]
 }
 
+_thin_container_cli_available() {
+  command -v apptainer >/dev/null 2>&1 || command -v singularity >/dev/null 2>&1
+}
+
 _tmpdir_usable() {
   local path="${1:-}"
   [[ -n "${path}" && -d "${path}" && -w "${path}" ]] || return 1
@@ -56,6 +60,10 @@ _tmpdir_usable() {
   [[ "${path}" != *"/pip_cache/"* && "${path}" != *"/pip_cache" ]] || return 1
   # Never keep system /tmp or limited node SLURM_TMPDIR as SIF scratch.
   [[ "${path}" != "/tmp" && "${path}" != /tmp/* ]] || return 1
+  if [[ -n "${SLURM_TMPDIR:-}" ]] \
+    && { [[ "${path}" == "${SLURM_TMPDIR}" || "${path}" == "${SLURM_TMPDIR}"/* ]]; }; then
+    return 1
+  fi
   return 0
 }
 
@@ -96,20 +104,33 @@ _thin_sif_smoke_ok() {
   "${cli}" exec "${sif}" python3 -c 'import sys; assert sys.version_info[:2] == (3, 11)' >/dev/null 2>&1
 }
 
+_thin_sif_ready_without_rebuild() {
+  # Stamp + file are enough on login nodes that lack apptainer; smoke when CLI exists.
+  local path="${1:-}"
+  path="$(_thin_sif_path "${path}")"
+  _thin_sif_stamp_matches "${path}" || return 1
+  if _thin_container_cli_available; then
+    _thin_sif_smoke_ok "${path}"
+  else
+    [[ -f "${path}" ]]
+  fi
+}
+
 thin_sif_build_needed() {
   local path="${1:-}"
   path="$(_thin_sif_path "${path}")"
   [[ -f "${path}" ]] || return 0
-  _thin_sif_stamp_matches "${path}" || return 0
-  _thin_sif_smoke_ok "${path}" && return 1
+  _thin_sif_ready_without_rebuild "${path}" && return 1
   return 0
 }
 
 submit_thin_sif_job() {
   local run_ts="${1:-}"
   run_ts="${run_ts:-$(date +%Y%m%d-%H%M%S)}"
+  # Clear ARC_SUBMIT_ONLY so the worker does not re-sbatch (nested job would
+  # make afterok fire before the image exists).
   sbatch --parsable \
-    --export=ALL,RUN_TS="${run_ts}",PROJECT_DIR="${PROJECT_DIR}" \
+    --export=ALL,ARC_SUBMIT_ONLY=,RUN_TS="${run_ts}",PROJECT_DIR="${PROJECT_DIR}" \
     --partition="${SLURM_CPU_PARTITION}" \
     --cpus-per-task="${THIN_SIF_CPUS}" \
     --mem="${THIN_SIF_MEM}" \
@@ -124,9 +145,7 @@ ensure_thin_sif() {
   [[ "${1:-}" == "--build" ]] && do_build=1
   path="$(_thin_sif_path "${2:-}")"
 
-  if [[ "${do_build}" -eq 0 ]] \
-    && _thin_sif_stamp_matches "${path}" \
-    && _thin_sif_smoke_ok "${path}"; then
+  if [[ "${do_build}" -eq 0 ]] && _thin_sif_ready_without_rebuild "${path}"; then
     echo "thin SIF OK: ${path}" >&2
     export THIN_SIF="${path}"
     return 0
