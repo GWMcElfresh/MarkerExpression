@@ -2,60 +2,63 @@
 # dataset (CELLxGENE collection 62ef75e4-cbea-454e-a0ce-998ec40223d3).
 # Every observed cell_type_ontology_term_id in that object must appear here;
 # unmapped terms abort the summarize job.
+#
+# Class names use underscores as delimiters (no spaces or slashes). Hyphens
+# mean marker-negative (CD8-) or a Non- prefix; plus means marker-positive.
 
 lineages:
-  - CD4+ T Cells
+  - CD4+_T_Cells
   - Tregs
-  - CD8+ T Cells
-  - CD8-CD4- T Cells
-  - Unspecified alpha-beta T Cells
-  - B cells
-  - Pro/pre B cells
-  - NK cells
+  - CD8+_T_Cells
+  - Non-Alpha_beta_T_Cells
+  - Unspecified_Alpha_beta_T_Cells
+  - B_cells
+  - Pro_pre_B_cells
+  - NK_cells
   - Monocytes
   - DCs
   - Macrophages
-  - Progenitor cells
+  - Progenitor_cells
   - OtherCellTypes
 
 # Keys are cell_type_ontology_term_id; values are lineage display names above.
 cell_type_ontology_term_id_to_lineage:
-  # CD4+ T Cells (Tregs are their own class)
-  CL:0000492: CD4+ T Cells   # CD4-positive helper T cell
-  CL:0002038: CD4+ T Cells   # T follicular helper cell
-  CL:0000905: CD4+ T Cells   # effector memory CD4-positive, alpha-beta T cell
-  CL:0000895: CD4+ T Cells   # naive thymus-derived CD4-positive, alpha-beta T cell
+  # CD4+_T_Cells (Tregs are their own class)
+  CL:0000492: CD4+_T_Cells   # CD4-positive helper T cell
+  CL:0002038: CD4+_T_Cells   # T follicular helper cell
+  CL:0000905: CD4+_T_Cells   # effector memory CD4-positive, alpha-beta T cell
+  CL:0000895: CD4+_T_Cells   # naive thymus-derived CD4-positive, alpha-beta T cell
 
   # Tregs
   CL:0000815: Tregs   # regulatory T cell
 
-  # CD8+ T Cells
-  CL:0000909: CD8+ T Cells   # CD8-positive, alpha-beta memory T cell
-  CL:0001203: CD8+ T Cells   # CD8-positive, alpha-beta memory T cell, CD45RO-positive
-  CL:0001062: CD8+ T Cells   # effector memory CD8-positive, alpha-beta T cell, terminally differentiated
-  CL:0000900: CD8+ T Cells   # naive thymus-derived CD8-positive, alpha-beta T cell
+  # CD8+_T_Cells
+  CL:0000909: CD8+_T_Cells   # CD8-positive, alpha-beta memory T cell
+  CL:0001203: CD8+_T_Cells   # CD8-positive, alpha-beta memory T cell, CD45RO-positive
+  CL:0001062: CD8+_T_Cells   # effector memory CD8-positive, alpha-beta T cell, terminally differentiated
+  CL:0000900: CD8+_T_Cells   # naive thymus-derived CD8-positive, alpha-beta T cell
 
-  # CD8-CD4- T Cells (gamma-delta + MAIT only; not unspecified alpha-beta)
-  CL:0000798: CD8-CD4- T Cells   # gamma-delta T cell
-  CL:0000940: CD8-CD4- T Cells   # mucosal-associated invariant T cell
+  # Non-Alpha_beta_T_Cells (gamma-delta + MAIT; not unspecified alpha-beta)
+  CL:0000798: Non-Alpha_beta_T_Cells   # gamma-delta T cell
+  CL:0000940: Non-Alpha_beta_T_Cells   # mucosal-associated invariant T cell
 
-  # Unspecified alpha-beta T (own category; do not fold into DN T)
-  CL:0000789: Unspecified alpha-beta T Cells   # alpha-beta T cell
+  # Unspecified_Alpha_beta_T_Cells (own category; do not fold into Non-Alpha_beta)
+  CL:0000789: Unspecified_Alpha_beta_T_Cells   # alpha-beta T cell
 
-  # B cells (mature / effector; pro/pre B are their own class)
-  CL:0000844: B cells   # germinal center B cell
-  CL:0000787: B cells   # memory B cell
-  CL:0000788: B cells   # naive B cell
-  CL:0000786: B cells   # plasma cell
-  CL:0000980: B cells   # plasmablast
+  # B_cells (mature / effector; pro/pre B are their own class)
+  CL:0000844: B_cells   # germinal center B cell
+  CL:0000787: B_cells   # memory B cell
+  CL:0000788: B_cells   # naive B cell
+  CL:0000786: B_cells   # plasma cell
+  CL:0000980: B_cells   # plasmablast
 
-  # Pro/pre B cells
-  CL:0000817: Pro/pre B cells   # precursor B cell
-  CL:0000826: Pro/pre B cells   # pro-B cell
+  # Pro_pre_B_cells
+  CL:0000817: Pro_pre_B_cells   # precursor B cell
+  CL:0000826: Pro_pre_B_cells   # pro-B cell
 
-  # NK cells
-  CL:0000938: NK cells   # CD16-negative, CD56-bright natural killer cell, human
-  CL:0000939: NK cells   # CD16-positive, CD56-dim natural killer cell, human
+  # NK_cells
+  CL:0000938: NK_cells   # CD16-negative, CD56-bright natural killer cell, human
+  CL:0000939: NK_cells   # CD16-positive, CD56-dim natural killer cell, human
 
   # Monocytes (classical CD14+ and non-classical CD16+)
   CL:0000860: Monocytes   # classical monocyte
@@ -70,8 +73,8 @@ cell_type_ontology_term_id_to_lineage:
   CL:0000235: Macrophages   # macrophage
   CL:0000583: Macrophages   # alveolar macrophage
 
-  # Progenitor cells (generic CL term; lineage-specific pro/pre B are separate)
-  CL:0011026: Progenitor cells   # progenitor cell
+  # Progenitor_cells (generic CL term; lineage-specific pro/pre B are separate)
+  CL:0011026: Progenitor_cells   # progenitor cell
 
   # OtherCellTypes
   CL:0001071: OtherCellTypes   # group 3 innate lymphoid cell

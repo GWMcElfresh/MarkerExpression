@@ -54,18 +54,18 @@ PYTHONPATH="${PROJECT_DIR}" "${VENV_DIR}/bin/python" -m analysis.summarize_perce
 
 | Lineage | Includes |
 |---------|----------|
-| CD4+ T Cells | helper, Tfh, EM CD4, naive CD4 |
+| CD4+_T_Cells | helper, Tfh, EM CD4, naive CD4 |
 | Tregs | regulatory T cell |
-| CD8+ T Cells | memory CD8, CD45RO+ memory, TEMRA, naive CD8 |
-| CD8-CD4- T Cells | γδ T and MAIT only |
-| Unspecified alpha-beta T Cells | generic `alpha-beta T cell` (CL:0000789) |
-| B cells | naive/memory/GC B, plasma, plasmablast |
-| Pro/pre B cells | precursor B cell, pro-B cell |
-| NK cells | CD56-bright and CD56-dim NK |
+| CD8+_T_Cells | memory CD8, CD45RO+ memory, TEMRA, naive CD8 |
+| Non-Alpha_beta_T_Cells | γδ T and MAIT only |
+| Unspecified_Alpha_beta_T_Cells | generic `alpha-beta T cell` (CL:0000789) |
+| B_cells | naive/memory/GC B, plasma, plasmablast |
+| Pro_pre_B_cells | precursor B cell, pro-B cell |
+| NK_cells | CD56-bright and CD56-dim NK |
 | Monocytes | classical (CD14+) and non-classical (CD16+) |
 | DCs | cDC, dendritic cell human, pDC |
 | Macrophages | macrophage, alveolar macrophage |
-| Progenitor cells | generic progenitor cell (CL:0011026) |
+| Progenitor_cells | generic progenitor cell (CL:0011026) |
 | OtherCellTypes | ILC3, lymphocyte, erythroid, mast, megakaryocyte, unknown |
 
 Unmapped ontology terms abort the job. Edit `config/lineage_map.yaml` and re-run.

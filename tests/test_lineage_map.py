@@ -64,15 +64,15 @@ def test_every_global_term_is_mapped():
     assert missing == [], f"unmapped Global terms: {missing}"
 
 
-def test_unspecified_alphabeta_t_is_not_dn_t():
+def test_unspecified_alphabeta_t_is_not_non_alphabeta():
     term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
-    # Generic alpha-beta T cell must stay out of CD8-CD4- T (gamma-delta + MAIT).
+    # Generic alpha-beta T cell must stay out of Non-Alpha_beta (gamma-delta + MAIT).
     assert (
         lineage_for_term("CL:0000789", term_to_lineage)
-        == "Unspecified alpha-beta T Cells"
+        == "Unspecified_Alpha_beta_T_Cells"
     )
-    assert lineage_for_term("CL:0000798", term_to_lineage) == "CD8-CD4- T Cells"
-    assert lineage_for_term("CL:0000940", term_to_lineage) == "CD8-CD4- T Cells"
+    assert lineage_for_term("CL:0000798", term_to_lineage) == "Non-Alpha_beta_T_Cells"
+    assert lineage_for_term("CL:0000940", term_to_lineage) == "Non-Alpha_beta_T_Cells"
 
 
 def test_unmapped_term_raises():
@@ -91,23 +91,37 @@ def test_monocytes_and_macrophages_are_distinct():
 
 def test_nk_cells_are_their_own_class():
     term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
-    assert lineage_for_term("CL:0000938", term_to_lineage) == "NK cells"
-    assert lineage_for_term("CL:0000939", term_to_lineage) == "NK cells"
+    assert lineage_for_term("CL:0000938", term_to_lineage) == "NK_cells"
+    assert lineage_for_term("CL:0000939", term_to_lineage) == "NK_cells"
 
 
 def test_tregs_are_not_cd4_t():
     term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
     assert lineage_for_term("CL:0000815", term_to_lineage) == "Tregs"
-    assert lineage_for_term("CL:0000492", term_to_lineage) == "CD4+ T Cells"
+    assert lineage_for_term("CL:0000492", term_to_lineage) == "CD4+_T_Cells"
 
 
 def test_pro_pre_b_are_not_mature_b():
     term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
-    assert lineage_for_term("CL:0000817", term_to_lineage) == "Pro/pre B cells"
-    assert lineage_for_term("CL:0000826", term_to_lineage) == "Pro/pre B cells"
-    assert lineage_for_term("CL:0000788", term_to_lineage) == "B cells"
+    assert lineage_for_term("CL:0000817", term_to_lineage) == "Pro_pre_B_cells"
+    assert lineage_for_term("CL:0000826", term_to_lineage) == "Pro_pre_B_cells"
+    assert lineage_for_term("CL:0000788", term_to_lineage) == "B_cells"
 
 
 def test_generic_progenitor_is_its_own_class():
     term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
-    assert lineage_for_term("CL:0011026", term_to_lineage) == "Progenitor cells"
+    assert lineage_for_term("CL:0011026", term_to_lineage) == "Progenitor_cells"
+
+
+def test_lineage_names_use_underscore_delimiters():
+    term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
+    for lineage in set(term_to_lineage.values()):
+        assert " " not in lineage, lineage
+        assert "/" not in lineage, lineage
+        # Hyphens are only Non- (negation) or CD*- (marker-negative).
+        for part in lineage.split("_"):
+            if "-" not in part:
+                continue
+            assert part.startswith("Non-") or (
+                part.startswith("CD") and part.endswith("-")
+            ), lineage
