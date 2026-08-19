@@ -1,0 +1,70 @@
+# Explicit Cell Ontology term -> lineage collapse for Domínguez Conde Global
+# dataset (CELLxGENE collection 62ef75e4-cbea-454e-a0ce-998ec40223d3).
+# Every observed cell_type_ontology_term_id in that object must appear here;
+# unmapped terms abort the summarize job.
+
+lineages:
+  - CD4+ T Cells
+  - CD8+ T Cells
+  - CD8-CD4- T Cells
+  - Unspecified alpha-beta T Cells
+  - B cells
+  - Monocytes
+  - DCs
+  - Macrophages
+  - Everything else
+
+# Keys are cell_type_ontology_term_id; values are lineage display names above.
+cell_type_ontology_term_id_to_lineage:
+  # CD4+ T Cells
+  CL:0000492: CD4+ T Cells   # CD4-positive helper T cell
+  CL:0002038: CD4+ T Cells   # T follicular helper cell
+  CL:0000905: CD4+ T Cells   # effector memory CD4-positive, alpha-beta T cell
+  CL:0000895: CD4+ T Cells   # naive thymus-derived CD4-positive, alpha-beta T cell
+  CL:0000815: CD4+ T Cells   # regulatory T cell
+
+  # CD8+ T Cells
+  CL:0000909: CD8+ T Cells   # CD8-positive, alpha-beta memory T cell
+  CL:0001203: CD8+ T Cells   # CD8-positive, alpha-beta memory T cell, CD45RO-positive
+  CL:0001062: CD8+ T Cells   # effector memory CD8-positive, alpha-beta T cell, terminally differentiated
+  CL:0000900: CD8+ T Cells   # naive thymus-derived CD8-positive, alpha-beta T cell
+
+  # CD8-CD4- T Cells (gamma-delta + MAIT only; not unspecified alpha-beta)
+  CL:0000798: CD8-CD4- T Cells   # gamma-delta T cell
+  CL:0000940: CD8-CD4- T Cells   # mucosal-associated invariant T cell
+
+  # Unspecified alpha-beta T (own category; do not fold into DN T)
+  CL:0000789: Unspecified alpha-beta T Cells   # alpha-beta T cell
+
+  # B cells
+  CL:0000844: B cells   # germinal center B cell
+  CL:0000787: B cells   # memory B cell
+  CL:0000788: B cells   # naive B cell
+  CL:0000786: B cells   # plasma cell
+  CL:0000980: B cells   # plasmablast
+  CL:0000817: B cells   # precursor B cell
+  CL:0000826: B cells   # pro-B cell
+
+  # Monocytes (classical CD14+ and non-classical CD16+)
+  CL:0000860: Monocytes   # classical monocyte
+  CL:0000875: Monocytes   # non-classical monocyte
+
+  # DCs
+  CL:0000990: DCs   # conventional dendritic cell
+  CL:0001056: DCs   # dendritic cell, human
+  CL:0000784: DCs   # plasmacytoid dendritic cell
+
+  # Macrophages
+  CL:0000235: Macrophages   # macrophage
+  CL:0000583: Macrophages   # alveolar macrophage
+
+  # Everything else
+  CL:0000938: Everything else   # CD16-negative, CD56-bright natural killer cell, human
+  CL:0000939: Everything else   # CD16-positive, CD56-dim natural killer cell, human
+  CL:0001071: Everything else   # group 3 innate lymphoid cell
+  CL:0000542: Everything else   # lymphocyte
+  CL:0000764: Everything else   # erythroid lineage cell
+  CL:0000097: Everything else   # mast cell
+  CL:0000556: Everything else   # megakaryocyte
+  CL:0011026: Everything else   # progenitor cell
+  unknown: Everything else

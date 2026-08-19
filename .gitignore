@@ -1,0 +1,26 @@
+# Environments and caches (live under PROJECT_DIR on ARC)
+.venv/
+.uv-cache/
+.uv-python/
+.singularity_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Runtime artifacts
+logs/
+outputs/
+tmp/
+work/
+
+# Local env overrides
+config/local.env
+.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
