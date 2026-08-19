@@ -87,3 +87,27 @@ def test_monocytes_and_macrophages_are_distinct():
     assert lineage_for_term("CL:0000875", term_to_lineage) == "Monocytes"
     assert lineage_for_term("CL:0000235", term_to_lineage) == "Macrophages"
     assert lineage_for_term("CL:0000583", term_to_lineage) == "Macrophages"
+
+
+def test_nk_cells_are_their_own_class():
+    term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
+    assert lineage_for_term("CL:0000938", term_to_lineage) == "NK cells"
+    assert lineage_for_term("CL:0000939", term_to_lineage) == "NK cells"
+
+
+def test_tregs_are_not_cd4_t():
+    term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
+    assert lineage_for_term("CL:0000815", term_to_lineage) == "Tregs"
+    assert lineage_for_term("CL:0000492", term_to_lineage) == "CD4+ T Cells"
+
+
+def test_pro_pre_b_are_not_mature_b():
+    term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
+    assert lineage_for_term("CL:0000817", term_to_lineage) == "Pro/pre B cells"
+    assert lineage_for_term("CL:0000826", term_to_lineage) == "Pro/pre B cells"
+    assert lineage_for_term("CL:0000788", term_to_lineage) == "B cells"
+
+
+def test_generic_progenitor_is_its_own_class():
+    term_to_lineage = load_lineage_map(LINEAGE_MAP_PATH)
+    assert lineage_for_term("CL:0011026", term_to_lineage) == "Progenitor cells"

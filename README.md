@@ -54,15 +54,19 @@ PYTHONPATH="${PROJECT_DIR}" "${VENV_DIR}/bin/python" -m analysis.summarize_perce
 
 | Lineage | Includes |
 |---------|----------|
-| CD4+ T Cells | helper, Tfh, EM CD4, naive CD4, Treg |
+| CD4+ T Cells | helper, Tfh, EM CD4, naive CD4 |
+| Tregs | regulatory T cell |
 | CD8+ T Cells | memory CD8, CD45RO+ memory, TEMRA, naive CD8 |
 | CD8-CD4- T Cells | γδ T and MAIT only |
 | Unspecified alpha-beta T Cells | generic `alpha-beta T cell` (CL:0000789) |
-| B cells | naive/memory/GC/pro/precursor B, plasma, plasmablast |
+| B cells | naive/memory/GC B, plasma, plasmablast |
+| Pro/pre B cells | precursor B cell, pro-B cell |
+| NK cells | CD56-bright and CD56-dim NK |
 | Monocytes | classical (CD14+) and non-classical (CD16+) |
 | DCs | cDC, dendritic cell human, pDC |
 | Macrophages | macrophage, alveolar macrophage |
-| Everything else | NK, ILC3, lymphocyte, erythroid, mast, megakaryocyte, progenitor, unknown |
+| Progenitor cells | generic progenitor cell (CL:0011026) |
+| OtherCellTypes | ILC3, lymphocyte, erythroid, mast, megakaryocyte, unknown |
 
 Unmapped ontology terms abort the job. Edit `config/lineage_map.yaml` and re-run.
 

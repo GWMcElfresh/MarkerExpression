@@ -56,7 +56,7 @@ def map_cell_types_to_lineage(
     """Map each ontology term id to a lineage; raise on any unmapped term.
 
     Unmapped terms are an invariant failure for this atlas: the Global object
-    has a closed set of labels, and silent collapse into Everything else would
+    has a closed set of labels, and silent collapse into OtherCellTypes would
     hide annotation drift after a Census refresh.
     """
     if isinstance(cell_type_ontology_term_ids, Mapping):

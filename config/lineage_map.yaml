@@ -5,23 +5,29 @@
 
 lineages:
   - CD4+ T Cells
+  - Tregs
   - CD8+ T Cells
   - CD8-CD4- T Cells
   - Unspecified alpha-beta T Cells
   - B cells
+  - Pro/pre B cells
+  - NK cells
   - Monocytes
   - DCs
   - Macrophages
-  - Everything else
+  - Progenitor cells
+  - OtherCellTypes
 
 # Keys are cell_type_ontology_term_id; values are lineage display names above.
 cell_type_ontology_term_id_to_lineage:
-  # CD4+ T Cells
+  # CD4+ T Cells (Tregs are their own class)
   CL:0000492: CD4+ T Cells   # CD4-positive helper T cell
   CL:0002038: CD4+ T Cells   # T follicular helper cell
   CL:0000905: CD4+ T Cells   # effector memory CD4-positive, alpha-beta T cell
   CL:0000895: CD4+ T Cells   # naive thymus-derived CD4-positive, alpha-beta T cell
-  CL:0000815: CD4+ T Cells   # regulatory T cell
+
+  # Tregs
+  CL:0000815: Tregs   # regulatory T cell
 
   # CD8+ T Cells
   CL:0000909: CD8+ T Cells   # CD8-positive, alpha-beta memory T cell
@@ -36,14 +42,20 @@ cell_type_ontology_term_id_to_lineage:
   # Unspecified alpha-beta T (own category; do not fold into DN T)
   CL:0000789: Unspecified alpha-beta T Cells   # alpha-beta T cell
 
-  # B cells
+  # B cells (mature / effector; pro/pre B are their own class)
   CL:0000844: B cells   # germinal center B cell
   CL:0000787: B cells   # memory B cell
   CL:0000788: B cells   # naive B cell
   CL:0000786: B cells   # plasma cell
   CL:0000980: B cells   # plasmablast
-  CL:0000817: B cells   # precursor B cell
-  CL:0000826: B cells   # pro-B cell
+
+  # Pro/pre B cells
+  CL:0000817: Pro/pre B cells   # precursor B cell
+  CL:0000826: Pro/pre B cells   # pro-B cell
+
+  # NK cells
+  CL:0000938: NK cells   # CD16-negative, CD56-bright natural killer cell, human
+  CL:0000939: NK cells   # CD16-positive, CD56-dim natural killer cell, human
 
   # Monocytes (classical CD14+ and non-classical CD16+)
   CL:0000860: Monocytes   # classical monocyte
@@ -58,13 +70,13 @@ cell_type_ontology_term_id_to_lineage:
   CL:0000235: Macrophages   # macrophage
   CL:0000583: Macrophages   # alveolar macrophage
 
-  # Everything else
-  CL:0000938: Everything else   # CD16-negative, CD56-bright natural killer cell, human
-  CL:0000939: Everything else   # CD16-positive, CD56-dim natural killer cell, human
-  CL:0001071: Everything else   # group 3 innate lymphoid cell
-  CL:0000542: Everything else   # lymphocyte
-  CL:0000764: Everything else   # erythroid lineage cell
-  CL:0000097: Everything else   # mast cell
-  CL:0000556: Everything else   # megakaryocyte
-  CL:0011026: Everything else   # progenitor cell
-  unknown: Everything else
+  # Progenitor cells (generic CL term; lineage-specific pro/pre B are separate)
+  CL:0011026: Progenitor cells   # progenitor cell
+
+  # OtherCellTypes
+  CL:0001071: OtherCellTypes   # group 3 innate lymphoid cell
+  CL:0000542: OtherCellTypes   # lymphocyte
+  CL:0000764: OtherCellTypes   # erythroid lineage cell
+  CL:0000097: OtherCellTypes   # mast cell
+  CL:0000556: OtherCellTypes   # megakaryocyte
+  unknown: OtherCellTypes
