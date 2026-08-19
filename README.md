@@ -42,10 +42,12 @@ scancel <jobid> …
 | `config/lineage_map.yaml` | Closed CL term → lineage table |
 | `analysis/summarize_percent.py` | Stream Census `raw` X; write percent tables |
 
-Worker invocation:
+Worker invocation (must run as a module from `$PROJECT_DIR`; the project is
+`package = false` so `analysis` is not installed into `.venv`):
 
 ```bash
-"${VENV_DIR}/bin/python" analysis/summarize_percent.py
+cd "${PROJECT_DIR}"
+PYTHONPATH="${PROJECT_DIR}" "${VENV_DIR}/bin/python" -m analysis.summarize_percent
 ```
 
 ## Lineages
@@ -113,6 +115,7 @@ Lessons carried from UCE_runner and saturn on ARC:
 | Summarize starts while venv still building | Keep a single `--dependency=afterok:<venv_job>` (stacked `--dependency` flags replace each other in SLURM) |
 | `mkdir .../rootfs: no such file or directory` | Do **not** rebuild a SIF. This project uses host `.venv` only. Cancel leftover thin-SIF jobs and resubmit `bash submit_run.sh` |
 | `Disk quota exceeded` under `~/.cache/uv` | Confirm `UV_CACHE_DIR` / `UV_PYTHON_INSTALL_DIR` under `$PROJECT_DIR` in the job log; `rm -rf ~/.cache/uv` if home was polluted |
+| `ModuleNotFoundError: No module named 'analysis'` | Invoke as `python -m analysis.summarize_percent` from `$PROJECT_DIR` (with `PYTHONPATH=$PROJECT_DIR`). Do not run the `.py` file path; that puts `analysis/` on `sys.path` instead of the repo root |
 | `uv` missing on compute | Venv job bootstraps `$PROJECT_DIR/.uv-bin`; or module-load/install `uv` on the node |
 | Wrong Python ABI / smoke fails | Sync uses `--python 3.11`. `rm -rf .venv` then `bash scripts/build_py_venv.sh` |
 | Census open fails (Timeout, OSError, empty query) | Compute node needs HTTPS to Census. The summarize log names the exception class. Check `sacct` then retry; H5AD ingest is a later fallback |

@@ -58,7 +58,12 @@ echo "PROJECT_DIR=${PROJECT_DIR}"
 echo "VENV_DIR=${VENV_DIR}"
 echo "CENSUS_VERSION=${CENSUS_VERSION}"
 
-"${VENV_DIR}/bin/python" "${PROJECT_DIR}/analysis/summarize_percent.py"
+# uv package=false: analysis is not installed into .venv. Running the file
+# path puts analysis/ on sys.path, so `from analysis.lib ...` fails. -m from
+# PROJECT_DIR puts the repo root on sys.path (same as pytest pythonpath=["."]).
+cd "${PROJECT_DIR}"
+export PYTHONPATH="${PROJECT_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
+"${VENV_DIR}/bin/python" -m analysis.summarize_percent
 
 out_dir="${OUTPUT_ROOT}/${RUN_ID}"
 for f in \
