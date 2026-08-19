@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Stamp-based ensure for the project .venv (uv.lock + pyproject.toml).
-# Sync runs inside the thin SIF so the venv shebang matches container Python 3.11.
+# Host uv sync — no Apptainer (UCE_runner / ARC-Template pattern).
 # Usage:
 #   source scripts/pipeline_env.sh
-#   source scripts/ensure_thin_sif.sh
 #   source scripts/ensure_py_venv.sh
 #   py_venv_sync_needed && submit_py_venv_job "$RUN_TS"
 #   ensure_py_venv
@@ -11,6 +10,7 @@
 # shellcheck shell=bash
 
 _ARC_VENV_STAMP_NAME=".arc-venv-hash"
+_ARC_UV_INSTALL_VERSION="${ARC_UV_INSTALL_VERSION:-0.8.4}"
 
 _arc_venv_dir() {
   printf '%s' "${VENV_DIR:-${PROJECT_DIR}/.venv}"
@@ -77,62 +77,75 @@ _arc_venv_write_stamp() {
 }
 
 _arc_venv_smoke_ok() {
-  local py cli
+  local py
   py="$(_arc_venv_python)"
   [[ -x "${py}" ]] || return 1
-  # Prefer smoke inside the thin SIF when present; fall back to host for local tests.
-  # Login nodes may lack apptainer: do not host-import a 3.11 venv (fails on 3.12)
-  # and do not treat that as "stale" every submit.
-  if [[ -f "${THIN_SIF:-}" ]] && { command -v apptainer >/dev/null 2>&1 || command -v singularity >/dev/null 2>&1; }; then
-    cli=apptainer
-    command -v apptainer >/dev/null 2>&1 || cli=singularity
-    "${cli}" exec \
-      --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
-      --pwd "${PROJECT_DIR}" \
-      "${THIN_SIF}" \
-      "${py}" -c 'import cellxgene_census, tiledbsoma, pandas, pyarrow, yaml' >/dev/null 2>&1
-  elif [[ -f "${THIN_SIF:-}" ]]; then
+  "${py}" -c 'import cellxgene_census, tiledbsoma, pandas, pyarrow, yaml' >/dev/null 2>&1
+}
+
+_ensure_host_uv() {
+  # Prefer PATH uv; else use project-local bootstrap under UV_BIN_DIR.
+  local bin_dir="${UV_BIN_DIR:-${PROJECT_DIR}/.uv-bin}"
+  if command -v uv >/dev/null 2>&1; then
     return 0
-  else
-    "${py}" -c 'import cellxgene_census, tiledbsoma, pandas, pyarrow, yaml' >/dev/null 2>&1
   fi
+  if [[ -x "${bin_dir}/uv" ]]; then
+    export PATH="${bin_dir}:${PATH}"
+    return 0
+  fi
+  return 1
+}
+
+_bootstrap_host_uv() {
+  # Install uv into PROJECT_DIR/.uv-bin (replaces thin-SIF %post curl).
+  # Call only from ensure_py_venv --build on a compute node — never login.
+  local bin_dir="${UV_BIN_DIR:-${PROJECT_DIR}/.uv-bin}"
+  mkdir -p "${bin_dir}"
+  if [[ -x "${bin_dir}/uv" ]]; then
+    export PATH="${bin_dir}:${PATH}"
+    return 0
+  fi
+  echo "Bootstrapping uv ${_ARC_UV_INSTALL_VERSION} into ${bin_dir}..." >&2
+  curl -LsSf "https://astral.sh/uv/${_ARC_UV_INSTALL_VERSION}/install.sh" \
+    | env UV_INSTALL_DIR="${bin_dir}" sh \
+    || {
+      echo "ERROR: failed to bootstrap uv into ${bin_dir}" >&2
+      return 1
+    }
+  [[ -x "${bin_dir}/uv" ]] || {
+    echo "ERROR: uv binary missing after install: ${bin_dir}/uv" >&2
+    return 1
+  }
+  export PATH="${bin_dir}:${PATH}"
+  echo "uv ready: $(command -v uv) ($(uv --version))" >&2
 }
 
 _sync_py_venv() {
-  local venv cli
+  local venv
   venv="$(_arc_venv_dir)"
   [[ -f "${PROJECT_DIR}/uv.lock" ]] || {
     echo "ERROR: missing ${PROJECT_DIR}/uv.lock — run uv lock and commit it" >&2
     return 1
   }
 
-  # Sync inside the thin SIF so shebangs resolve to container Python 3.11.
-  if [[ -f "${THIN_SIF:-}" ]] && { command -v apptainer >/dev/null 2>&1 || command -v singularity >/dev/null 2>&1; }; then
-    cli=apptainer
-    command -v apptainer >/dev/null 2>&1 || cli=singularity
-    echo "Syncing .venv from uv.lock inside thin SIF (${THIN_SIF})..." >&2
-    "${cli}" exec \
-      --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
-      --pwd "${PROJECT_DIR}" \
-      --env "UV_CACHE_DIR=${UV_CACHE_DIR}" \
-      --env "UV_PYTHON_INSTALL_DIR=${UV_PYTHON_INSTALL_DIR}" \
-      --env "UV_PROJECT_ENVIRONMENT=${venv}" \
-      --env "TMPDIR=${TMPDIR:-${PROJECT_DIR}/tmp}" \
-      --env "XDG_CACHE_HOME=${UV_CACHE_DIR}" \
-      "${THIN_SIF}" \
-      uv sync --frozen --python "${ARC_PY_VERSION}" \
-      || return 1
-  else
-    command -v uv >/dev/null 2>&1 || {
-      echo "ERROR: uv not on PATH and thin SIF unavailable for in-container sync" >&2
-      return 1
-    }
-    echo "Syncing .venv from uv.lock on host (no thin SIF; local/dev path)..." >&2
-    (
-      cd "${PROJECT_DIR}"
-      UV_PROJECT_ENVIRONMENT="${venv}" uv sync --frozen --python "${ARC_PY_VERSION}" --extra dev
-    ) || return 1
+  if ! _ensure_host_uv; then
+    _bootstrap_host_uv || return 1
   fi
+  command -v uv >/dev/null 2>&1 || {
+    echo "ERROR: uv not on PATH after bootstrap" >&2
+    return 1
+  }
+
+  echo "Syncing .venv from uv.lock (frozen, python ${ARC_PY_VERSION}) in ${PROJECT_DIR}..." >&2
+  (
+    cd "${PROJECT_DIR}"
+    # Re-export so --export=ALL cannot keep a login-shell ~/.cache/uv.
+    UV_CACHE_DIR="${UV_CACHE_DIR}" \
+      UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR}" \
+      UV_PROJECT_ENVIRONMENT="${venv}" \
+      TMPDIR="${TMPDIR:-${PROJECT_DIR}/tmp}" \
+      uv sync --frozen --python "${ARC_PY_VERSION}"
+  ) || return 1
 }
 
 py_venv_sync_needed() {
@@ -147,7 +160,7 @@ py_venv_sync_needed() {
 submit_py_venv_job() {
   local run_ts="${1:-}"
   run_ts="${run_ts:-$(date +%Y%m%d-%H%M%S)}"
-  # Clear ARC_SUBMIT_ONLY so the worker does not re-sbatch (same afterok race as SIF).
+  # Clear ARC_SUBMIT_ONLY so the worker does not re-sbatch.
   sbatch --parsable \
     --export=ALL,ARC_SUBMIT_ONLY=,RUN_TS="${run_ts}",PROJECT_DIR="${PROJECT_DIR}" \
     --partition="${SLURM_CPU_PARTITION}" \
@@ -195,8 +208,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
   # shellcheck source=pipeline_env.sh
   source "${PROJECT_DIR}/scripts/pipeline_env.sh"
-  # shellcheck source=ensure_thin_sif.sh
-  source "${PROJECT_DIR}/scripts/ensure_thin_sif.sh"
-  ensure_thin_sif || true
   ensure_py_venv "${1:-}"
 fi

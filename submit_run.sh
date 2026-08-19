@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Login-node launcher: thin SIF + uv sync (one afterok list), then summarize.
+# Login-node launcher: uv sync (if needed), then summarize.
 #
 # Usage (ARC login node):
 #   export PROJECT_DIR=/home/exacloud/gscratch/prime-seq/Bimber/GW/MarkerExpression
@@ -16,8 +16,6 @@ fi
 source "${PROJECT_DIR}/scripts/pipeline_env.sh"
 # shellcheck source=scripts/ensure_env.sh
 source "${PROJECT_DIR}/scripts/ensure_env.sh"
-# shellcheck source=scripts/ensure_thin_sif.sh
-source "${PROJECT_DIR}/scripts/ensure_thin_sif.sh"
 # shellcheck source=scripts/ensure_py_venv.sh
 source "${PROJECT_DIR}/scripts/ensure_py_venv.sh"
 
@@ -35,25 +33,8 @@ printf '%s\n' "${RUN_ID}" > "${OUTPUT_ROOT}/${RUN_ID}/run_id.txt"
 
 PREP_JOBS=()
 
-if thin_sif_build_needed; then
-  # Dual-mode wrapper clears ARC_SUBMIT_ONLY on the child sbatch (direct
-  # submit_thin_sif_job would leak it and nested-sbatch the worker).
-  SJ="$(bash "${PROJECT_DIR}/scripts/build_thin_sif.sh")"
-  PREP_JOBS+=("${SJ}")
-  echo "Submitted thin SIF build: ${SJ}"
-else
-  ensure_thin_sif || exit 1
-  echo "thin SIF already ready: ${THIN_SIF}"
-fi
-
-# uv sync must wait for a fresh SIF when one was just queued; otherwise the
-# venv job races the image pull and fails ensure_thin_sif.
+# Host uv sync into PROJECT_DIR/.venv (no thin SIF).
 if py_venv_sync_needed; then
-  if ((${#PREP_JOBS[@]})); then
-    export ARC_PY_VENV_DEPS="--dependency=afterok:${PREP_JOBS[0]}"
-  else
-    export ARC_PY_VENV_DEPS=""
-  fi
   VJ="$(bash "${PROJECT_DIR}/scripts/build_py_venv.sh")"
   PREP_JOBS+=("${VJ}")
   echo "Submitted py .venv sync: ${VJ}"

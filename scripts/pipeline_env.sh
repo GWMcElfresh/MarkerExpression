@@ -2,6 +2,7 @@
 # Shared ARC environment contract for MarkerExpression.
 # Source only after PROJECT_DIR is exported by the launcher/wrapper.
 # Do not derive PROJECT_DIR from BASH_SOURCE here — SLURM copies job scripts to spool.
+# Python stages use host uv.lock + .venv (no Apptainer).
 # shellcheck disable=SC2034
 
 set -euo pipefail
@@ -22,23 +23,19 @@ SLURM_CPU_PARTITION="${SLURM_CPU_PARTITION:-batch}"
 SLURM_GPU_PARTITION="${SLURM_GPU_PARTITION:-gpu}"
 
 # Force overwrite so --export=ALL cannot keep login-shell home caches.
-SINGULARITY_CACHEDIR="${PROJECT_DIR}/.singularity_cache"
-APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
 UV_CACHE_DIR="${PROJECT_DIR}/.uv-cache"
 UV_PYTHON_INSTALL_DIR="${PROJECT_DIR}/.uv-python"
+UV_BIN_DIR="${UV_BIN_DIR:-${PROJECT_DIR}/.uv-bin}"
 ARC_PY_VERSION="${ARC_PY_VERSION:-3.11}"
-THIN_SIF_NAME="${THIN_SIF_NAME:-marker_expression_thin.sif}"
-THIN_SIF="${THIN_SIF:-${SINGULARITY_CACHEDIR}/${THIN_SIF_NAME}}"
 CENSUS_VERSION="${CENSUS_VERSION:-stable}"
-ARC_APPTAINER_BUILD_ARGS="${ARC_APPTAINER_BUILD_ARGS:-}"
 
 mkdir -p \
   "${LOGS_DIR}" \
   "${OUTPUT_ROOT}" \
   "${PROJECT_DIR}/tmp" \
-  "${SINGULARITY_CACHEDIR}" \
   "${UV_CACHE_DIR}" \
-  "${UV_PYTHON_INSTALL_DIR}"
+  "${UV_PYTHON_INSTALL_DIR}" \
+  "${UV_BIN_DIR}"
 
 arc_log_path() {
   local step="${1:-}"
@@ -59,44 +56,26 @@ arc_stage_tmpdir() {
   printf '%s/tmp/%s-%s-%s' "${PROJECT_DIR}" "${stage}" "${USER:-user}" "${SLURM_JOB_ID:-local}"
 }
 
-arc_container_cli() {
-  if command -v apptainer >/dev/null 2>&1; then
-    printf 'apptainer'
-  elif command -v singularity >/dev/null 2>&1; then
-    printf 'singularity'
-  else
-    echo "ERROR: apptainer/singularity not on PATH" >&2
-    return 1
-  fi
-}
-
-arc_exec_python() {
-  # Run project .venv python inside the thin SIF with PROJECT_DIR bound.
-  local cli
-  cli="$(arc_container_cli)" || return 1
-  [[ -f "${THIN_SIF}" ]] || {
-    echo "ERROR: thin SIF missing: ${THIN_SIF}" >&2
-    return 1
-  }
-  [[ -x "${VENV_DIR}/bin/python" ]] || {
-    echo "ERROR: venv python missing: ${VENV_DIR}/bin/python" >&2
-    return 1
-  }
-  "${cli}" exec \
-    --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
-    --pwd "${PROJECT_DIR}" \
-    "${THIN_SIF}" \
-    "${VENV_DIR}/bin/python" "$@"
+arc_pin_job_scratch() {
+  # Per-job scratch plus library caches off $HOME. Prints the tmpdir path.
+  local stage="${1:-stage}"
+  local tmpdir
+  tmpdir="$(arc_stage_tmpdir "${stage}")"
+  mkdir -p -m 700 "${tmpdir}" "${tmpdir}/xdg-cache" "${tmpdir}/mpl"
+  export TMPDIR="${tmpdir}"
+  export XDG_CACHE_HOME="${tmpdir}/xdg-cache"
+  export MPLCONFIGDIR="${tmpdir}/mpl"
+  export PYTHONUNBUFFERED=1
+  export MPLBACKEND="${MPLBACKEND:-Agg}"
+  printf '%s' "${tmpdir}"
 }
 
 export PROJECT_DIR OUTPUT_ROOT LOGS_DIR VENV_DIR
-export SINGULARITY_CACHEDIR APPTAINER_CACHEDIR UV_CACHE_DIR UV_PYTHON_INSTALL_DIR
+export UV_CACHE_DIR UV_PYTHON_INSTALL_DIR UV_BIN_DIR
 export SLURM_CPU_PARTITION SLURM_GPU_PARTITION ARC_PY_VERSION
-export THIN_SIF_NAME THIN_SIF CENSUS_VERSION
-export THIN_SIF_TIME THIN_SIF_CPUS THIN_SIF_MEM
+export CENSUS_VERSION
 export PY_VENV_TIME PY_VENV_CPUS PY_VENV_MEM
 export SUMMARIZE_TIME SUMMARIZE_CPUS SUMMARIZE_MEM
-export ARC_APPTAINER_BUILD_ARGS
 # shellcheck disable=SC2034
 export _DEFAULT_PROJECT_DIR
-export -f arc_log_path arc_log_file arc_stage_tmpdir arc_container_cli arc_exec_python
+export -f arc_log_path arc_log_file arc_stage_tmpdir arc_pin_job_scratch
